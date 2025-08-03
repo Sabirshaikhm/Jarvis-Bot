@@ -16,7 +16,7 @@ Jarvis is a simple voice-enabled personal assistant built with Python. It can li
 
 ## 📦 Requirements
 
-Make sure Python 3.11+ is installed. Install dependencies using:
+Make sure Python 3.11+ is installed. Install dependencies using: 
 
 ```bash
 pip install pyttsx3 SpeechRecognition pyjokes playsound==1.2.2
