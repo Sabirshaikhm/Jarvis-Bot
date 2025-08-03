@@ -1,2 +1,6 @@
 # Jarvis-Bot
-🔹 Jarvis Bot – Your Smart Personal Task Assistant Jarvis is an intelligent, voice-enabled virtual assistant engineered to streamline your workflow and automate specific tasks with precision. Whether you're managing schedules, sending reminders, controlling smart devices, or executing custom business functions, ]
+Ti run this program you had to install certain python packages 
+# = python -m pip install pyttsx3 SpeechRecognition pyjokes playsound 
+if it shows error in terminal or to upgrade packages version just run : 
+# pip install --upgrade pip
+
