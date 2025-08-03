@@ -1,0 +1,158 @@
+import speech_recognition as sr
+import pyttsx3
+import datetime
+import webbrowser
+import pyjokes
+import os
+import queue
+import threading
+
+# -------------------------
+# Initialize TTS Engine
+# -------------------------
+engine = pyttsx3.init()
+engine.setProperty('rate', 150)
+engine.setProperty('volume', 1.0)
+
+# Queue to store speech messages
+speech_queue = queue.Queue()
+
+def speech_worker():
+    """Background thread to process speech queue sequentially"""
+    while True:
+        text = speech_queue.get()
+        if text == "__EXIT__":
+            break
+        engine.say(text)
+        engine.runAndWait()
+        speech_queue.task_done()
+
+# Start speech thread
+speech_thread = threading.Thread(target=speech_worker, daemon=True)
+speech_thread.start()
+
+def speak(text):
+    """Queue text for speech"""
+    print(f"🗣️ Speaking: {text}")
+    speech_queue.put(text)
+
+# -------------------------
+# Listen Function
+# -------------------------
+def listen():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("\n🎤 Listening...")
+        r.adjust_for_ambient_noise(source, duration=1)
+        audio = r.listen(source)
+
+    try:
+        command = r.recognize_google(audio)
+        print(f"✅ Recognized: {command}")
+        return command.lower()
+    except sr.UnknownValueError:
+        print("❌ Could not understand audio")
+        return ""
+    except sr.RequestError as e:
+        print(f"⚠️ Could not request results; {e}")
+        return ""
+
+# -------------------------
+# Note Functions
+# -------------------------
+def take_note():
+    speak("What should I write in the note?")
+    note = listen()
+    if note:
+        with open("notes.txt", "a") as file:
+            file.write(note + "\n")
+        speak(f"I've saved your note: {note}")
+    else:
+        speak("No note was saved.")
+
+def read_notes():
+    if os.path.exists("notes.txt"):
+        with open("notes.txt", "r") as file:
+            notes = file.readlines()
+        if notes:
+            speak("Here are your notes:")
+            for note in notes:
+                speak(note.strip())
+        else:
+            speak("Your notes file is empty.")
+    else:
+        speak("No notes found yet.")
+
+def clear_notes():
+    if os.path.exists("notes.txt"):
+        open("notes.txt", "w").close()
+        speak("All notes cleared.")
+    else:
+        speak("No notes to clear.")
+
+# -------------------------
+# Command Execution
+# -------------------------
+def execute_command(command):
+    cmd = command.lower()
+
+    if "time" in cmd:
+        time = datetime.datetime.now().strftime("%I:%M %p")
+        speak(f"The time is {time}")
+
+    elif "youtube" in cmd:
+        speak("Opening YouTube")
+        webbrowser.open("https://youtube.com")
+
+    elif "joke" in cmd:
+        joke = pyjokes.get_joke()
+        speak(joke)
+
+    elif "calculator" in cmd or "calc" in cmd:
+        speak("Opening calculator")
+        os.system("start calc")
+
+    elif "note" in cmd:
+        if "take" in cmd or "write" in cmd:
+            speak("Taking a note")
+            take_note()
+        elif "read" in cmd or "show" in cmd:
+            speak("Reading notes")
+            read_notes()
+        elif "clear" in cmd or "delete" in cmd:
+            speak("Clearing all notes")
+            clear_notes()
+        else:
+            speak("I didn't understand which note action you want.")
+
+    elif "exit" in cmd or "quit" in cmd or "goodbye" in cmd:
+        speak("Goodbye, have a great day!")
+        return False
+
+    else:
+        speak("I am not sure how to do that yet.")
+    
+    return True
+
+# -------------------------
+# JARVIS Continuous Mode
+# -------------------------
+def jarvis():
+    speak("JARVIS is online and always listening.")
+    while True:
+        command = listen()
+        if command:  # Only act if something is recognized
+            print(f"📢 Command received: {command}")
+            if not execute_command(command):
+                break
+        else:
+            print("...Still listening for a command.")
+
+    # Stop speech thread
+    speech_queue.put("__EXIT__")
+
+# -------------------------
+# Run JARVIS
+# -------------------------
+if __name__ == "__main__":
+    jarvis()
